@@ -1,0 +1,25 @@
+{
+  "name": "hunk-semantic-search",
+  "version": "0.1.0",
+  "description": "Search a Hunk review by meaning: ask where retry behavior changed and jump to the right hunks, using a local embedding model",
+  "type": "module",
+  "license": "MIT",
+  "author": "bottercode",
+  "repository": "github:bottercode/hunk-semantic-search",
+  "keywords": ["hunk-extension", "hunk", "semantic-search", "embeddings", "code-review"],
+  "hunk": {
+    "extensions": ["./src/index.ts"],
+    "apiVersion": 27
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "eval": "bun scripts/eval.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "ghostty-opentui": "^1.5.0",
+    "hunkdiff": "0.23.0",
+    "typescript": "^7.0.2"
+  }
+}
