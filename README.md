@@ -72,8 +72,9 @@ Both commands are also in the **Extensions** menu.
 | Retrieval prompts, `search result` task | 69% | 75% |
 | Prompts plus unchanged lines | 63% | 63% |
 | No prompts | 50% | 69% |
+| Keyword search (BM25) on the same text, no model | 19% | 50% |
 
-I wrote the questions myself and the set is small, so treat these as rough numbers. Some misses are reasonable answers that the eval doesn't count, such as the docs page for a question about help text. On an M2 Mac with 8 GB of memory, a 123-hunk commit indexes in about 7 seconds and each question takes about 0.25 seconds.
+The keyword row is the bar the model has to clear, and it clears it by a wide margin. The questions deliberately avoid the code's own names, though; that's the case this extension is for, and it's also the case where keywords do worst. I wrote the questions myself and the set is small, so treat these as rough numbers. Some misses are reasonable answers that the eval doesn't count, such as the docs page for a question about help text. On an M2 Mac with 8 GB of memory, a 123-hunk commit indexes in about 7 seconds and each question takes about 0.25 seconds.
 
 ```sh
 bun scripts/eval.ts --misses          # rerun it; needs a Hunk checkout at ~/Developer/hunk or --repo

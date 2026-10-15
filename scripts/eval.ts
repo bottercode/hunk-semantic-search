@@ -158,6 +158,8 @@ async function runEval() {
   const hunksByCommit = new Map(commits.map((commit) => [commit, readCommitHunks(commit)]));
   console.log(`${CASES.length} cases over ${commits.length} commits (${[...hunksByCommit.values()].reduce((n, h) => n + h.length, 0)} hunks)\n`);
 
+  runKeywordBaseline(hunksByCommit);
+
   for (const [name, style] of Object.entries(STYLES)) {
     let top1 = 0;
     let top3 = 0;
@@ -185,6 +187,54 @@ async function runEval() {
     console.log(`${name.padEnd(26)} top-1 ${pct(top1)}  top-3 ${pct(top3)}`);
     if (args.includes("--misses")) for (const miss of misses) console.log(miss);
   }
+}
+
+/**
+ * Score the same cases with BM25 keyword ranking over the same documents, as the bar semantic
+ * search has to clear: if keywords do as well, the model is not earning its 620 MB.
+ */
+function runKeywordBaseline(hunksByCommit: Map<string, EvalHunk[]>) {
+  const tokenize = (text: string) =>
+    text
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .toLowerCase()
+      .match(/[a-z0-9]+/g) ?? [];
+  let top1 = 0;
+  let top3 = 0;
+  const misses: string[] = [];
+
+  for (const [commit, hunks] of hunksByCommit) {
+    const docs = hunks
+      .map((entry) => ({ entry, document: hunkDocument(entry.path, entry.hunk, DEFAULT_DOCUMENT_STYLE) }))
+      .filter((item): item is { entry: EvalHunk; document: string } => item.document !== null)
+      .map((item) => ({ ...item, tokens: tokenize(item.document) }));
+    const avgLength = docs.reduce((n, d) => n + d.tokens.length, 0) / docs.length;
+    const docFreq = new Map<string, number>();
+    for (const d of docs) for (const t of new Set(d.tokens)) docFreq.set(t, (docFreq.get(t) ?? 0) + 1);
+
+    for (const evalCase of CASES.filter((c) => c.commit === commit)) {
+      const terms = [...new Set(tokenize(evalCase.query))];
+      const scored = docs.map((d) => {
+        let score = 0;
+        for (const term of terms) {
+          const tf = d.tokens.filter((t) => t === term).length;
+          if (tf === 0) continue;
+          const df = docFreq.get(term) ?? 0;
+          const idf = Math.log(1 + (docs.length - df + 0.5) / (df + 0.5));
+          score += (idf * tf * 2.2) / (tf + 1.2 * (0.25 + (0.75 * d.tokens.length) / avgLength));
+        }
+        return { d, score };
+      });
+      scored.sort((a, b) => b.score - a.score);
+      const rank = scored.slice(0, 3).findIndex(({ d }) => isTarget(evalCase, d.entry));
+      if (rank === 0) top1 += 1;
+      if (rank >= 0) top3 += 1;
+      else misses.push(`  miss: "${evalCase.query}" → ${scored.slice(0, 3).map(({ d }) => `${d.entry.path} ${hunkLabel(d.entry.hunk, 30)}`).join("; ")}`);
+    }
+  }
+
+  console.log(`${"keyword baseline (BM25)".padEnd(26)} top-1 ${pct(top1)}  top-3 ${pct(top3)}`);
+  if (args.includes("--misses")) for (const miss of misses) console.log(miss);
 }
 
 /** True when one indexed hunk is among a case's targets. */
