@@ -75,7 +75,7 @@ export function createTestHost(config: Record<string, unknown> = {}) {
   const logs: string[] = [];
   const status = new Map<string, string>();
   const answers = { prompts: [] as (string | null)[], selects: [] as (number | null)[], confirms: [] as boolean[] };
-  const dialogs: { title: string; options?: readonly string[] }[] = [];
+  const dialogs: { title: string; options?: readonly string[]; statusWhileOpen?: string }[] = [];
 
   const statusLine = {
     set: (item: { id: string; spans: { text: string }[] }) => status.set(item.id, item.spans.map((s) => s.text).join("")),
@@ -110,7 +110,7 @@ export function createTestHost(config: Record<string, unknown> = {}) {
       },
       dialogs: {
         select: async (options: { title: string; options: readonly string[] }) => {
-          dialogs.push(options);
+          dialogs.push({ ...options, statusWhileOpen: status.get("status") });
           const pick = answers.selects.shift();
           return pick === null || pick === undefined ? null : options.options[pick]!;
         },

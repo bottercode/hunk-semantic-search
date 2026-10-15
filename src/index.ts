@@ -257,6 +257,7 @@ export function createSemanticSearch(deps: SemanticSearchDependencies = defaultD
       }
 
       const labels = ranked.map(resultLabel);
+      setStatus([{ text: `"${lastQuery}" · ${ranked.length} results · choose one`, tone: "muted" }]);
       const choice = await ctx.dialogs.select({ title: `Hunks about "${lastQuery}"`, options: labels });
       if (startedIn !== generation) return;
 

@@ -36,6 +36,7 @@ describe("semantic search command", () => {
     await host.run(SEARCH_COMMAND_ID, FILES);
 
     expect(host.dialogs[0]!.title).toBe('Hunks about "retry request"');
+    expect(host.dialogs[0]!.statusWhileOpen).toBe('≈ "retry request" · 3 results · choose one');
     expect(host.dialogs[0]!.options).toEqual([
       expect.stringMatching(/^1\. src\/api\.ts:11 · retry the request three times · \d\.\d\d$/),
       expect.stringMatching(/^2\. src\/auth\.ts:1 · retry the token check · /),

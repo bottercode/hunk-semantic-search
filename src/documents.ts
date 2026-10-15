@@ -58,7 +58,8 @@ export function queryDocument(query: string, style: DocumentStyle = DEFAULT_DOCU
  * `@@` context.
  *
  * Several hunks of one function share the same `@@` context, so the changed text is what tells
- * results apart; lines that are only punctuation or a bare `import {` say nothing and are skipped.
+ * results apart. Lines that are only punctuation, and imports (a new file's first lines), say
+ * nothing about the change and are skipped.
  */
 export function hunkLabel(hunk: PatchHunk, maxLength = 80) {
   const meaningful = changedLinesInReadingOrder(hunk).find((line) => isMeaningful(line.text));
@@ -66,9 +67,11 @@ export function hunkLabel(hunk: PatchHunk, maxLength = 80) {
   return label.length > maxLength ? `${label.slice(0, maxLength - 1)}…` : label;
 }
 
-/** True when a line has more to say than punctuation and one keyword. */
+/** True when a line has more to say than punctuation, one keyword, or an import. */
 function isMeaningful(text: string) {
-  return (text.match(/\w+/g) ?? []).length >= 2;
+  const trimmed = text.trim();
+  if (/^(import\b|export\s+(\*|\{[^}]*\})\s+from\b|[}\])]*\s*from\s+["'])/.test(trimmed)) return false;
+  return (trimmed.match(/\w+/g) ?? []).length >= 2;
 }
 
 /** The fields of Hunk's `ExtensionDiffFile` this extension reads. */

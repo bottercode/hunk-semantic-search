@@ -64,7 +64,12 @@ describe("hunkLabel", () => {
 
     expect(hunkLabel(RETRY!)).toBe("for (let attempt = 0; attempt < 3; attempt++) {");
     expect(hunkLabel(deletion!)).toBe("const legacy = true;");
+    const [newFile] = parsePatchHunks(
+      '@@ -0,0 +1,4 @@\n+import { useMemo } from "react";\n+import type {\n+} from "./types";\n+export function useScope() {\n',
+    );
+
     expect(hunkLabel(onlyPunctuation!)).toBe("function setup() {");
+    expect(hunkLabel(newFile!)).toBe("export function useScope() {");
     expect(hunkLabel(RETRY!, 8)).toBe("for (le…");
   });
 });
